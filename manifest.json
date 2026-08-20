@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.joshuaswarren.hardstop",
+  "name": "Hard Stop",
+  "version": "0.1.0",
+  "author": "Joshua Warren",
+  "description": "A quitting-time boundary for your bar: countdown chip, wind-down ritual, and a clean end to the workday.",
+  "kinds": [
+    "service",
+    "bar-widget",
+    "overlay"
+  ],
+  "entryPoints": {
+    "service": "Service.qml",
+    "barWidget": "BarWidget.qml",
+    "overlay": "Overlay.qml"
+  },
+  "barWidget": {
+    "displayName": "Hard Stop",
+    "description": "Countdown to quitting time with a wind-down ritual.",
+    "category": "Productivity",
+    "defaultSection": "right",
+    "allowMultiple": false
+  },
+  "keepLoaded": true
+}
