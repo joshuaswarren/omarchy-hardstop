@@ -58,6 +58,8 @@ omarchy plugin add https://github.com/joshuaswarren/omarchy-hardstop
 omarchy plugin enable io.github.joshuaswarren.hardstop right
 ```
 
+Removal is the mirror image: `omarchy plugin disable io.github.joshuaswarren.hardstop`, then `omarchy plugin remove io.github.joshuaswarren.hardstop`. Your recap file is yours and is never touched on removal.
+
 Zero configuration required: the defaults give you a 17:00 stop Monday through Friday and a recap file at `~/Documents/day-recaps.md`.
 
 ## Configuration
