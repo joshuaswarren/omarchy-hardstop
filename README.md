@@ -20,6 +20,8 @@ At stop time a desktop notification fires and the wind-down overlay opens. It op
 
 ![Recap card](assets/overlay-recap.png)
 
+A 28-second interaction recording lives in [assets/demo.mp4](assets/demo.mp4).
+
 Four cards: *That's the day* → a five-line recap of today → tomorrow's first action → done. The recap and tomorrow line are appended to a plain Markdown file:
 
 ```markdown
@@ -45,9 +47,9 @@ Four cards: *That's the day* → a five-line recap of today → tomorrow's first
 - Suspend-safe: state is recomputed from the wall clock every tick, never accumulated
 - Zero network access, zero accounts, zero analytics
 
-Theme switch with the overlay open, no restart:
+Every surface is drawn from theme tokens, so a live theme switch recolors the open overlay with no restart. On Catppuccin Latte:
 
-![Tokyo Night](assets/overlay-theme-tokyo.png)
+![Catppuccin Latte](assets/overlay-theme-latte.png)
 
 ## Installation
 
@@ -94,6 +96,8 @@ Settings live inline on the plugin's entry in `~/.config/omarchy/shell.json`. Bo
 | Right click | Menu: snooze, skip today, help |
 | Esc (in overlay) | Dismiss from any card |
 | Ctrl+Enter / Enter | Advance recap / tomorrow card |
+
+![Chip menu](assets/menu.png)
 
 ### IPC
 

@@ -1,11 +1,16 @@
 import QtQuick
-import Quickshell.Io
 import Quickshell
+import Quickshell.Io
 import qs.Commons
 import qs.Ui
 
 // Countdown-to-quitting-time chip. Presentation only: every state comes from
 // the hardstop service, so the chip renders nothing until that service is up.
+//
+// Escalation is monotonic (from the design review): idle is dimmed, warning
+// carries the accent, final is an accent pill with bold minutes, and past
+// stop keeps the pill in urgent with the overage count, so the most
+// important moment is never quieter than the one before it.
 BarWidget {
   id: root
   moduleName: "io.github.joshuaswarren.hardstop"
@@ -22,24 +27,28 @@ BarWidget {
 
   readonly property bool countsDown: phase === "idle" || phase === "warning" || phase === "final"
   readonly property bool over: phase === "over"
-  readonly property bool finalPill: phase === "final"
+  readonly property bool finalPill: phase === "final" || over
   readonly property bool dimmedIdle: (phase === "offday" || phase === "done")
     && (service ? service.showWhenIdle === true : false)
   readonly property bool chipVisible: service !== null && (countsDown || over || dimmedIdle)
 
-  // nf-weather-sunset (U+E34D), from the same weather-icons block the
-  // first-party weather widget paints, so the codepoint is stable in the
-  // installed bar font (the newer md-* block is version-shifted there).
-  readonly property string glyph: ""
+  // nf-weather block (stable in the installed bar font; the newer md-*
+  // block is version-shifted there). Sunset counts down, the sun sets past
+  // stop, no-schedule days get a set moon, a finished day a full one.
+  readonly property string glyph: phase === "offday" ? "\ue3c2"
+    : phase === "done" ? "\ue39b"
+    : "\ue34d"
 
-  readonly property string timeText: countsDown && service ? String(service.remainingText ?? "") : ""
+  readonly property string timeText: countsDown && service
+    ? String(service.remainingText ?? "")
+    : over ? root.minutesOver + " min" : ""
 
-  // Muted bar text darkens the bar foreground (media-widget idiom) rather
-  // than using palette `muted`, so a per-bar foreground theme still holds.
-  readonly property color contentColor: finalPill ? Color.bar.background
+  // Idle rests at the shell's own dimming lever (WidgetButton.dimmed) so the
+  // first value step of the ladder is quiet, not mid-gray.
+  readonly property color contentColor: over ? Color.bar.background
+    : phase === "final" ? Color.bar.background
     : phase === "warning" ? Color.accent
-    : over ? Color.urgent
-    : Qt.darker(button.foreground, 1.5)
+    : button.foreground
 
   readonly property var verticalStack: {
     var stack = [root.glyph]
@@ -49,6 +58,8 @@ BarWidget {
       var parts = root.timeText.split(":")
       if (parts.length >= 2) stack.push(parts[0], parts[1])
       else if (parts[0] !== "") stack.push(parts[0])
+    } else if (root.over) {
+      stack.push(String(root.minutesOver), "min")
     }
     return stack
   }
@@ -73,12 +84,12 @@ BarWidget {
     if (phase === "warning" && chipVisible) warningPulse.restart()
   }
 
-  // One soft pulse per minute in warning — triggered on the minute change,
-  // never looping, so an unattended bar animates nothing.
+  // One soft breath per minute in warning: a slight swell, never a dim
+  // (escalation must not get quieter), never looping.
   SequentialAnimation {
     id: warningPulse
-    NumberAnimation { target: chipContent; property: "opacity"; to: 0.55; duration: 300; easing.type: Easing.OutCubic }
-    NumberAnimation { target: chipContent; property: "opacity"; to: 1; duration: 360; easing.type: Easing.OutCubic }
+    NumberAnimation { target: chipContent; property: "scale"; to: 1.07; duration: 300; easing.type: Easing.OutCubic }
+    NumberAnimation { target: chipContent; property: "scale"; to: 1; duration: 360; easing.type: Easing.OutCubic }
   }
 
   WidgetButton {
@@ -87,8 +98,8 @@ BarWidget {
     bar: root.bar
     labelVisible: false
     hasVisualContent: root.chipVisible
-    dimmed: root.dimmedIdle
-    horizontalMargin: 8.75
+    dimmed: root.dimmedIdle || root.phase === "idle"
+    horizontalMargin: Style.spaceReal(8.75)
     fixedWidth: root.vertical ? -1 : chipRow.implicitWidth + button.scaledHorizontalMargin * 2
     fixedHeight: root.vertical ? root.verticalStack.length * Style.bar.iconSlot : -1
     tooltipText: root.over && root.minutesOver > 0 ? root.minutesOver + " min past stop" : ""
@@ -108,14 +119,15 @@ BarWidget {
       id: chipContent
       anchors.fill: parent
 
-      // Final-state pill: declared before the row so the label paints on top.
+      // Final/past-stop pill: declared before the row so the label paints
+      // on top. Caps need more horizontal room than vertical padding buys.
       Rectangle {
         visible: root.finalPill && !root.vertical
         anchors.centerIn: chipRow
-        width: chipRow.implicitWidth + Style.spacing.lg * 2
-        height: chipRow.implicitHeight + Style.spacing.xs * 2
+        width: chipRow.implicitWidth + Style.spacing.xl * 2
+        height: chipRow.implicitHeight + Style.spacing.sm * 2
         radius: height / 2
-        color: Color.accent
+        color: root.over ? Color.urgent : Color.notifications.countdown
       }
 
       Row {
@@ -124,12 +136,13 @@ BarWidget {
         anchors.centerIn: parent
         spacing: Style.spacing.sm
 
-        Text {
+        OpticalGlyph {
+          width: Style.bar.iconSlot
+          height: Style.bar.iconSlot
           text: root.glyph
+          fontFamily: button.fontFamily
+          fontSize: button.fontSize
           color: root.contentColor
-          font.family: button.fontFamily
-          font.pixelSize: button.fontSize
-          anchors.verticalCenter: parent.verticalCenter
         }
 
         Text {
@@ -176,14 +189,14 @@ BarWidget {
     Column {
       id: menuColumn
       anchors.fill: parent
-      spacing: Style.spacing.xs
+      spacing: Style.spacing.rowGap
 
       Button {
         width: parent.width
         leftAlign: true
         text: "Snooze 15 min (" + root.snoozesLeft + " left)"
         enabled: root.canSnooze
-        opacity: enabled ? 1 : 0.4
+        opacity: enabled ? 1 : 0.45
         onClicked: {
           if (root.service) root.service.snooze()
           root.close()
@@ -199,6 +212,9 @@ BarWidget {
           root.close()
         }
       }
+
+      // Help leaves the app; separate it from the day actions.
+      PanelSeparator {}
 
       Button {
         width: parent.width
