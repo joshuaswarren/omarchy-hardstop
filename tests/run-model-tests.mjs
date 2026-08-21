@@ -218,13 +218,24 @@ check("tilde expands", M.expandTilde("~/Documents/day-recaps.md", "/home/joshuaw
   "/home/joshuawarren/Documents/day-recaps.md");
 check("bare tilde", M.expandTilde("~", "/home/joshuawarren/"), "/home/joshuawarren");
 check("absolute untouched", M.expandTilde("/tmp/x.md", "/home/j"), "/tmp/x.md");
-check("traversal rejected", M.isSafePath("/home/j/../../etc/passwd"), false);
-check("relative rejected", M.isSafePath("notes.md"), false);
-check("absolute accepted", M.isSafePath("/home/j/Documents/day-recaps.md"), true);
+check("traversal rejected", M.isSafeRecapPath("/home/j/../../etc/passwd.md"), false);
+check("relative rejected", M.isSafeRecapPath("notes.md"), false);
+check("markdown accepted", M.isSafeRecapPath("/home/j/Documents/day-recaps.md"), true);
+check("txt accepted", M.isSafeRecapPath("/home/j/notes/end-of-day.TXT"), true);
+check("dot-directory component accepted", M.isSafeRecapPath("/home/j/.local/share/recaps.md"), true);
+check("dotfile rejected", M.isSafeRecapPath("/home/j/.bashrc"), false);
+check("dotfile with md extension rejected", M.isSafeRecapPath("/home/j/.evil.md"), false);
+check("binary extension rejected", M.isSafeRecapPath("/home/j/notes.bin"), false);
+check("no extension rejected", M.isSafeRecapPath("/home/j/notes"), false);
+check("trailing slash rejected", M.isSafeRecapPath("/home/j/notes.md/"), false);
 check("parent dir", M.parentDir("/home/j/Documents/day-recaps.md"), "/home/j/Documents");
 check("state dir from xdg", M.stateDirFor("/run/user/1000/state", "/home/j"),
   "/run/user/1000/state/omarchy-hardstop");
 check("state dir fallback", M.stateDirFor("", "/home/j"), "/home/j/.local/state/omarchy-hardstop");
+check("relative xdg ignored per spec", M.stateDirFor("relative/state", "/home/j"),
+  "/home/j/.local/state/omarchy-hardstop");
+check("option-shaped xdg ignored", M.stateDirFor("-rf", "/home/j"),
+  "/home/j/.local/state/omarchy-hardstop");
 
 // -------------------------------------------------------- QML library compat
 const body = source.replace(/^\s*\/\/.*$/gm, "");

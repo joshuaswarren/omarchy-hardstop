@@ -331,11 +331,18 @@ function expandTilde(path, home) {
   return p
 }
 
-// Absolute, no traversal — the recap file is the only path this plugin writes.
-function isSafePath(path) {
+// The recap file is the only user-pointable path this plugin writes, and the
+// write is a whole-file UTF-8 round-trip. Require: absolute, no traversal, a
+// visible filename, and a plain-text extension — so a typo (or a hostile
+// shell.json edit) cannot aim the ritual at a dotfile like ~/.bashrc or
+// silently mangle a binary.
+function isSafeRecapPath(path) {
   var p = String(path || "")
   if (p.charAt(0) !== "/") return false
-  return p.split("/").indexOf("..") === -1
+  if (p.split("/").indexOf("..") !== -1) return false
+  var name = p.slice(p.lastIndexOf("/") + 1)
+  if (name === "" || name.charAt(0) === ".") return false
+  return /\.(md|markdown|txt)$/i.test(name)
 }
 
 function parentDir(path) {
@@ -345,8 +352,10 @@ function parentDir(path) {
   return p.slice(0, cut)
 }
 
+// XDG spec: a relative XDG_STATE_HOME must be ignored. Requiring the leading
+// slash also keeps the mkdir argv from ever starting with "-".
 function stateDirFor(xdgStateHome, home) {
   var base = String(xdgStateHome || "").trim()
-  if (base === "") base = String(home || "").replace(/\/+$/, "") + "/.local/state"
+  if (base.charAt(0) !== "/") base = String(home || "").replace(/\/+$/, "") + "/.local/state"
   return base.replace(/\/+$/, "") + "/omarchy-hardstop"
 }

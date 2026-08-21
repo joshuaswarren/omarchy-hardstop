@@ -77,7 +77,7 @@ Defaults must produce a working plugin with zero configuration (17:00 Mon–Fri,
 - **Service**: owns the state machine (idle → warning → final → stopped → done), the clock, snooze counters, and recap-file writes. Single source of truth; bar widget and overlay read from it.
 - **Bar widget**: pure presentation of service state.
 - **Overlay**: `open(payloadJson)` / `close()` per the Quattro contract; payload may carry `{"early": true}` for manual invocation.
-- `keepLoaded: true` — the service must survive between summons to keep timer state.
+- `keepLoaded: true` — keeps the overlay mounted between summons so the wind-down opens instantly at stop time (services always stay loaded regardless; first-party overlay precedent: reminders, clipboard).
 - Clock handling must survive suspend/resume (recompute from wall clock on tick, never accumulate deltas).
 
 ## 7. Security

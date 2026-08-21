@@ -132,6 +132,12 @@ Item {
   // latch the user already committed is not.
   property bool statePersisted: false
 
+  // Writes queue until mkdir -p has actually exited, so a first-run snooze in
+  // the first second cannot write into a directory that does not exist yet
+  // (the failure would be silent and the latch would re-fire after restart).
+  property bool stateDirReady: false
+  property string pendingStateText: ""
+
   function loadState(raw) {
     if (statePersisted) return
     storedLatch = Model.parseLatch(raw, todayKey)
@@ -143,7 +149,14 @@ Item {
     storedLatch = next
     stateLoaded = true
     statePersisted = true
-    stateFile.setText(JSON.stringify(next, null, 2) + "\n")
+    pendingStateText = JSON.stringify(next, null, 2) + "\n"
+    flushState()
+  }
+
+  function flushState() {
+    if (!stateDirReady || pendingStateText === "") return
+    stateFile.setText(pendingStateText)
+    pendingStateText = ""
   }
 
   FileView {
@@ -160,20 +173,22 @@ Item {
     id: ensureStateDirProc
     command: ["mkdir", "-p", root.stateDir]
     running: false
+    onExited: {
+      root.stateDirReady = true
+      root.flushState()
+      // Read once the directory exists. FileView reports a missing file
+      // through onLoadFailed, which is the first-run path.
+      stateFile.reload()
+    }
   }
 
-  Component.onCompleted: {
-    ensureStateDirProc.running = true
-    // Read once the directory exists. FileView reports a missing file through
-    // onLoadFailed, which is the first-run path.
-    Qt.callLater(function() { stateFile.reload() })
-  }
+  Component.onCompleted: ensureStateDirProc.running = true
 
   // ----------------------------------------------------------- recap file
   readonly property string recapPath: {
     var expanded = Model.expandTilde(settings.recapFile, homeDir)
-    if (!Model.isSafePath(expanded)) {
-      console.warn("hardstop: refusing unsafe recapFile", settings.recapFile)
+    if (!Model.isSafeRecapPath(expanded)) {
+      console.warn("hardstop: refusing recapFile (must be an absolute .md/.markdown/.txt path, no dotfiles):", settings.recapFile)
       return ""
     }
     return expanded
@@ -204,8 +219,20 @@ Item {
     printErrors: false
     // Both arms are no-ops unless a completeRitual left a block pending, so
     // the implicit load when `path` first resolves cannot rewrite the file.
+    // Only a confirmed missing file may append to "": any other read failure
+    // must never turn an append into a truncation of a file we could not read.
     onLoaded: root.flushRecap(text())
-    onLoadFailed: root.flushRecap("")
+    onLoadFailed: function(error) {
+      if (error === FileViewError.FileNotFound) {
+        root.flushRecap("")
+        return
+      }
+      if (root.pendingRecapBlock === "") return
+      root.pendingRecapBlock = ""
+      console.warn("hardstop: recap not written, read failed:", FileViewError.toString(error), root.recapPath)
+      // Answers a user action, so it speaks even when quiet is set.
+      notify("Hard Stop", "Couldn't save your recap: " + FileViewError.toString(error) + " reading " + root.recapPath)
+    }
   }
 
   Process {
