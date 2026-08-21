@@ -1,6 +1,6 @@
 # Hard Stop — Requirements
 
-Status: **specification** (v0.1.0, nothing implemented yet)
+Status: **implemented** (v0.1.0; all acceptance criteria verified live on Omarchy 4.0.0.r1758)
 Target: Omarchy 4 / Quattro shell (Quickshell plugin API)
 Plugin ID: `io.github.joshuaswarren.hardstop`
 Kinds: `service` + `bar-widget` + `overlay`
