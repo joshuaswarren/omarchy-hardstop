@@ -1,5 +1,7 @@
 # Hard Stop
 
+[![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-pink)](https://github.com/sponsors/joshuaswarren)
+
 A quitting-time boundary for the [Omarchy](https://omarchy.org) bar. Every other timer points into work. This one points out.
 
 Hard Stop counts down to the end of your workday, escalates gently as the boundary approaches, and closes the day with a short wind-down ritual: a five-line recap, tomorrow's first action, done. No lock, no scorecard, no cloud.
@@ -144,6 +146,14 @@ omarchy plugin validate .             # manifest + entry-point validation
 Plugin code under `~/.config/omarchy/plugins/` hot-reloads on save; QML component changes may additionally need `omarchy restart shell` to flush the engine's component cache.
 
 The full behavior spec and acceptance criteria live in [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md).
+
+## Support
+
+Every bit of support helps keep omarchy-hardstop alive and free. If you are able, [sponsor on GitHub](https://github.com/sponsors/joshuaswarren) or send a Lightning donation to `joshuaswarren@strike.me` to directly fund continued development and new integrations.
+
+[![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-pink?style=for-the-badge)](https://github.com/sponsors/joshuaswarren)
+
+If financial support is not an option, you can still make a big difference: [star the repo](https://github.com/joshuaswarren/omarchy-hardstop), share it, or recommend it to a colleague. Word of mouth is how most people find omarchy-hardstop.
 
 ## License
 
