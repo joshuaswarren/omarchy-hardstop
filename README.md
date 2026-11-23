@@ -145,8 +145,6 @@ omarchy plugin validate .             # manifest + entry-point validation
 
 Plugin code under `~/.config/omarchy/plugins/` hot-reloads on save; QML component changes may additionally need `omarchy restart shell` to flush the engine's component cache.
 
-The full behavior spec and acceptance criteria live in [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md).
-
 ## Support
 
 Every bit of support helps keep omarchy-hardstop alive and free. If you are able, [sponsor on GitHub](https://github.com/sponsors/joshuaswarren), [buy me a coffee on Ko-fi](https://ko-fi.com/joshuaswarren), or send a Lightning donation to `joshuaswarren@strike.me` to directly fund continued development and new integrations.
